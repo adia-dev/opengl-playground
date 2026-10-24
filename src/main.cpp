@@ -1,6 +1,6 @@
 #define GLFW_INCLUDE_NONE
-#include <glad/gl.h>
 #include <GLFW/glfw3.h>
+#include <glad/gl.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -42,9 +42,8 @@ int main() {
         }
     });
 
-    glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height){
-        glViewport(0, 0, width, height);
-    });
+    glfwSetWindowSizeCallback(
+        window, [](GLFWwindow*, int width, int height) { glViewport(0, 0, width, height); });
 
     auto clear = []() {
         glClearColor(0.08F, 0.12F, 0.18F, 1.0F);
