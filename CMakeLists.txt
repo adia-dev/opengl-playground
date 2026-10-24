@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(3d_balls LANGUAGES CXX)
+project(3d_balls LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,8 +18,11 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glfw)
 
+add_library(glad STATIC third_party/glad/src/gl.c)
+target_include_directories(glad PUBLIC third_party/glad/include)
+
 add_executable(3d_balls src/main.cpp)
-target_link_libraries(3d_balls PRIVATE glfw)
+target_link_libraries(3d_balls PRIVATE glfw glad)
 
 if(APPLE)
     target_link_libraries(3d_balls PRIVATE "-framework OpenGL")

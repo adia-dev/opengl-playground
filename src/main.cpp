@@ -1,14 +1,6 @@
 #define GLFW_INCLUDE_NONE
-#if defined(__APPLE__)
-#define GL_SILENCE_DEPRECATION
-#endif
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
-
-#if defined(__APPLE__)
-#include <OpenGL/gl3.h>
-#else
-#include <GL/gl.h>
-#endif
 
 #include <cstdlib>
 #include <iostream>
@@ -34,6 +26,15 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
+
+    const int openGLVersion = gladLoadGL(glfwGetProcAddress);
+    if (openGLVersion == 0) {
+        std::cerr << "Failed to initialize GLAD\n";
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return EXIT_FAILURE;
+    }
+
     glfwSwapInterval(1);
     glfwSetKeyCallback(window, [](GLFWwindow* current, int key, int, int action, int) {
         if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
@@ -41,13 +42,17 @@ int main() {
         }
     });
 
-    while (glfwWindowShouldClose(window) == GLFW_FALSE) {
-        int width = 0;
-        int height = 0;
-        glfwGetFramebufferSize(window, &width, &height);
+    glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height){
         glViewport(0, 0, width, height);
+    });
+
+    auto clear = []() {
         glClearColor(0.08F, 0.12F, 0.18F, 1.0F);
         glClear(GL_COLOR_BUFFER_BIT);
+    };
+
+    while (glfwWindowShouldClose(window) == GLFW_FALSE) {
+        clear();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
