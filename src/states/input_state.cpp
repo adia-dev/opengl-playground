@@ -3,30 +3,30 @@
 #include "states/button_state.hpp"
 
 auto InputState::before_frame() noexcept -> void {
-    for (auto& state : key_states_) {
+    for (auto& state : m_key_states) {
         state = state & ~(ButtonFlag::Pressed | ButtonFlag::Released);
     }
-    for (auto& state : mouse_button_states_) {
+    for (auto& state : m_mouse_button_states) {
         state = state & ~(ButtonFlag::Pressed | ButtonFlag::Released);
     }
 }
 
 auto InputState::update_key(int key, int action) noexcept -> void {
     if (auto key_index = as_button_index(key, GLFW_KEY_LAST); key_index) {
-        update_button(key_states_[*key_index], key, action);
+        update_button(m_key_states[*key_index], key, action);
     }
 }
 
 auto InputState::update_mouse_button(int button, int action) noexcept -> void {
     if (auto key_index = as_button_index(button, GLFW_MOUSE_BUTTON_LAST); key_index) {
-        update_button(mouse_button_states_[*key_index], button, action);
+        update_button(m_mouse_button_states[*key_index], button, action);
     }
 }
 
 [[nodiscard]]
 auto InputState::is_key_pressed(int key) noexcept -> bool {
     if (auto i = as_button_index(key, GLFW_KEY_LAST); i) {
-        return has_flag(key_states_[*i], ButtonFlag::Pressed);
+        return has_flag(m_key_states[*i], ButtonFlag::Pressed);
     }
     return false;
 }
@@ -34,7 +34,7 @@ auto InputState::is_key_pressed(int key) noexcept -> bool {
 [[nodiscard]]
 auto InputState::is_key_down(int key) noexcept -> bool {
     if (auto i = as_button_index(key, GLFW_KEY_LAST); i) {
-        return has_flag(key_states_[*i], ButtonFlag::Down);
+        return has_flag(m_key_states[*i], ButtonFlag::Down);
     }
     return false;
 }
@@ -42,7 +42,7 @@ auto InputState::is_key_down(int key) noexcept -> bool {
 [[nodiscard]]
 auto InputState::is_key_released(int key) noexcept -> bool {
     if (auto i = as_button_index(key, GLFW_KEY_LAST); i) {
-        return has_flag(key_states_[*i], ButtonFlag::Released);
+        return has_flag(m_key_states[*i], ButtonFlag::Released);
     }
     return false;
 }

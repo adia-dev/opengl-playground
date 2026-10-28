@@ -27,5 +27,5 @@ class Window {
         void operator()(GLFWwindow* window);
     };
     using WindowPtr = std::unique_ptr<GLFWwindow, WindowDeleter>;
-    WindowPtr handle_{nullptr};
+    WindowPtr m_handle{nullptr};
 };

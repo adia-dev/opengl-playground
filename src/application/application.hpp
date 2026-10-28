@@ -23,8 +23,8 @@ class Application final {
     auto render() const noexcept -> void;
 
   private:
-    GlfwRuntime glfwRuntime_;
-    Window window_;
-    InputState input_state_;
-    ApplicationState application_state_;
+    GlfwRuntime m_glfw_runtime;
+    Window m_window;
+    InputState m_input_state;
+    ApplicationState m_application_state;
 };

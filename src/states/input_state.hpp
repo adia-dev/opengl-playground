@@ -19,8 +19,8 @@ class InputState final {
     auto is_key_released(int key) noexcept -> bool;
 
   private:
-    std::array<ButtonFlag, GLFW_KEY_LAST + 1> key_states_{};
-    std::array<ButtonFlag, GLFW_MOUSE_BUTTON_LAST + 1> mouse_button_states_{};
+    std::array<ButtonFlag, GLFW_KEY_LAST + 1> m_key_states{};
+    std::array<ButtonFlag, GLFW_MOUSE_BUTTON_LAST + 1> m_mouse_button_states{};
 
     [[nodiscard]]
     static auto as_button_index(int key, int last) noexcept -> std::optional<size_t>;
