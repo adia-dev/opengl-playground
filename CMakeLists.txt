@@ -24,7 +24,13 @@ FetchContent_MakeAvailable(glfw)
 add_library(glad STATIC third_party/glad/src/gl.c)
 target_include_directories(glad PUBLIC third_party/glad/include)
 
-add_executable(3d_balls src/main.cpp)
+file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
+)
+add_executable(3d_balls ${PROJECT_SOURCES})
+target_include_directories(3d_balls PRIVATE src)
+target_compile_definitions(3d_balls PRIVATE GLFW_INCLUDE_NONE)
 target_link_libraries(3d_balls PRIVATE glfw glad)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
@@ -34,6 +40,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
         -Wpedantic
         -Wconversion
         -Wshadow
+        -Wno-unused-parameter
     )
 endif()
 
@@ -53,36 +60,38 @@ if(ENABLE_SANITIZERS)
     endif()
 endif()
 
-find_program(CLANG_FORMAT_23_EXECUTABLE
+find_program(CLANG_FORMAT_EXECUTABLE
     NAMES clang-format
     HINTS /opt/homebrew/opt/llvm/bin /usr/local/opt/llvm/bin
 )
-if(CLANG_FORMAT_23_EXECUTABLE)
+if(CLANG_FORMAT_EXECUTABLE)
     execute_process(
-        COMMAND "${CLANG_FORMAT_23_EXECUTABLE}" --version
+        COMMAND "${CLANG_FORMAT_EXECUTABLE}" --version
         OUTPUT_VARIABLE CLANG_FORMAT_VERSION
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    if(CLANG_FORMAT_VERSION MATCHES "version ([0-9]+)")
-        set(CLANG_FORMAT_MAJOR_VERSION "${CMAKE_MATCH_1}")
-    else()
-        set(CLANG_FORMAT_MAJOR_VERSION 0)
-    endif()
-endif()
-
-if(CLANG_FORMAT_MAJOR_VERSION GREATER_EQUAL 23)
+    file(GLOB_RECURSE PROJECT_FORMAT_SOURCES CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cxx"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hh"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hxx"
+    )
     add_custom_target(format
-        COMMAND "${CLANG_FORMAT_23_EXECUTABLE}" -i "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp"
+        COMMAND "${CLANG_FORMAT_EXECUTABLE}" -i ${PROJECT_FORMAT_SOURCES}
         COMMENT "Formatting project C++ sources"
         VERBATIM
     )
     add_custom_target(format-check
-        COMMAND "${CLANG_FORMAT_23_EXECUTABLE}" --dry-run --Werror "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp"
+        COMMAND "${CLANG_FORMAT_EXECUTABLE}" --dry-run --Werror ${PROJECT_FORMAT_SOURCES}
         COMMENT "Checking C++ formatting"
         VERBATIM
     )
-elseif(CLANG_FORMAT_23_EXECUTABLE)
-    message(STATUS "clang-format 23+ is required for the project's formatting targets; found ${CLANG_FORMAT_VERSION}")
+else()
+    message(STATUS "clang-format was not found; formatting targets are unavailable")
 endif()
 
 if(APPLE)

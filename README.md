@@ -14,9 +14,10 @@ Requirements: Xcode Command Line Tools, CMake 3.24+, and Ninja. GLFW is download
 
 ## C++ workflow
 
-- `.clang-format` sets the shared formatting style. Run `cmake --build --preset debug --target format` to format `src/main.cpp`, or use `format-check` to check it.
-- The formatting rules use clang-format 23+'s argument thresholds: calls and function declarations with more than three arguments/parameters break one per line. On macOS, install it with `brew install llvm`; CMake prefers the Homebrew LLVM formatter.
-- `.clang-tidy` enables bug, analyzer, performance, and selected modernization checks in clangd. Neovim already starts clangd with `--clang-tidy`.
+Application code lives under `src/`, grouped by responsibility. Headers sit next to their implementation files; small types and constexpr helpers can stay header-only. `src/shaders/` contains shader sources, and `third_party/` contains vendored dependencies. A top-level `include/` directory is useful if the project later exposes a public library API, but is unnecessary for these application-private headers.
+
+- `.clang-format` defines the shared LLVM-based C++23 style. Run `cmake --build --preset debug --target format` to format project C++ sources, or use `format-check` to check them. Install `clang-format` if it is not already available; CMake prefers the Homebrew LLVM formatter on macOS.
+- `.clang-tidy` enables the standard bugprone, analyzer, performance, modernization, and readability check groups in clangd. Neovim already starts clangd with `--clang-tidy`.
 - To run clang-tidy during compilation, install `clang-tidy` and configure with `cmake --preset debug -DENABLE_CLANG_TIDY=ON`.
 - To enable runtime memory and undefined-behavior checks, configure with `cmake --preset debug -DENABLE_SANITIZERS=ON`, then build and run as usual.
 - `.clangd` enables parameter-name and deduced-type inlay hints. In Neovim, toggle them for the current buffer with `<leader>ci`.
