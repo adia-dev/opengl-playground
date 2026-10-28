@@ -6,3 +6,6 @@ InlayHints:
   ParameterNames: true
   DeducedTypes: true
   Designators: true
+
+Documentation:
+  CommentFormat: Doxygen

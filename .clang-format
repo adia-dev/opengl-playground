@@ -1,20 +1,15 @@
+---
+Language: Cpp
 BasedOnStyle: LLVM
+Standard: c++23
 IndentWidth: 4
 ColumnLimit: 100
 BreakBeforeBraces: Attach
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
-PackArguments:
-  BinPack: UseBreakAfter
-  BreakAfter: 3
-PackParameters:
-  BinPack: UseBreakAfter
-  BreakAfter: 3
-BreakAfterOpenBracketBracedList: true
-BreakAfterOpenBracketFunction: true
-BreakBeforeCloseBracketBracedList: true
-BreakBeforeCloseBracketFunction: true
+BinPackArguments: false
+BinPackParameters: false
 Cpp11BracedListStyle: true
 PointerAlignment: Left
 SortIncludes: CaseSensitive
