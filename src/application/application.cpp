@@ -1,5 +1,7 @@
 #include "application/application.hpp"
+#include "GLFW/glfw3.h"
 #include <glad/gl.h>
+#include <print>
 #include <stdexcept>
 
 Application::Application(const char* title, int window_width, int window_height)
@@ -11,6 +13,7 @@ Application::Application(const char* title, int window_width, int window_height)
 
 void Application::run() {
     init();
+    register_callbacks();
 
     while (glfwWindowShouldClose(window_.get()) == 0) {
         handle_events();
@@ -29,6 +32,9 @@ auto Application::init() -> void {
     int w, h;
     glfwGetFramebufferSize(window_.get(), &w, &h);
     glViewport(0, 0, w, h);
+}
+
+auto Application::register_callbacks() -> void {
     glfwSetFramebufferSizeCallback(
         window_.get(),
         [](GLFWwindow* window, int w, int h) static -> void { glViewport(0, 0, w, h); });
@@ -42,6 +48,12 @@ auto Application::init() -> void {
             auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
             app->input_state_.update_key(key, action);
         });
+
+    glfwSetMouseButtonCallback(
+        window_.get(), [](GLFWwindow* window, int button, int action, int mods) static -> void {
+            auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+            app->input_state_.update_mouse_button(button, action);
+        });
 }
 
 auto Application::handle_events() noexcept -> void {
@@ -49,10 +61,15 @@ auto Application::handle_events() noexcept -> void {
     glfwPollEvents();
 }
 
-auto Application::update() noexcept -> void {}
+auto Application::update() noexcept -> void {
+    if (input_state_.is_key_pressed(GLFW_KEY_LEFT)) {
+        application_state_.red_intensity += 0.1F;
+        std::println("PRESSED AHHHHH!");
+    }
+}
 
 auto Application::render() const noexcept -> void {
-    glClearColor(0.3F, 1.0, 0.2F, 1.0);
+    glClearColor(application_state_.red_intensity, 1.0, 0.2F, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
     window_.swap_buffers();
 }
