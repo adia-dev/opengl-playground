@@ -34,6 +34,23 @@ target_compile_definitions(3d_balls PRIVATE GLFW_INCLUDE_NONE)
 target_compile_definitions(3d_balls PRIVATE RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src/resources")
 target_link_libraries(3d_balls PRIVATE glfw glad)
 
+include(CTest)
+if(BUILD_TESTING)
+    FetchContent_Declare(
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v3.8.1
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(Catch2)
+    add_executable(input_state_tests tests/input_state_tests.cpp src/states/input_state.cpp)
+    target_include_directories(input_state_tests PRIVATE src)
+    target_compile_definitions(input_state_tests PRIVATE GLFW_INCLUDE_NONE)
+    target_link_libraries(input_state_tests PRIVATE Catch2::Catch2WithMain glfw)
+    include(Catch)
+    catch_discover_tests(input_state_tests)
+endif()
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(3d_balls PRIVATE
         -Wall

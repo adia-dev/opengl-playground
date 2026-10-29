@@ -12,6 +12,20 @@ Requirements: Xcode Command Line Tools, CMake 3.24+, and Ninja. GLFW is download
 
 `run.sh` configures with the `debug` preset, builds the app, then launches it. Close the window or press **Esc** to quit.
 
+## Tests
+
+Tests use Catch2 and CTest. The first configure downloads Catch2 when testing is enabled.
+
+```sh
+cmake --preset debug
+cmake --build --preset debug
+ctest --test-dir build --output-on-failure
+```
+
+The input-state tests run without opening a window or creating an OpenGL context.
+To skip the test dependency, configure with `cmake --preset debug -DBUILD_TESTING=OFF`;
+use `-DBUILD_TESTING=ON` to enable it again.
+
 ## C++ workflow
 
 Application code lives under `src/`, grouped by responsibility. Headers sit next to their implementation files; small types and constexpr helpers can stay header-only. `src/resources/shaders/` contains shader sources, and `third_party/` contains vendored dependencies. A top-level `include/` directory is useful if the project later exposes a public library API, but is unnecessary for these application-private headers.
