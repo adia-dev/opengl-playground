@@ -2,6 +2,8 @@
 #include "GLFW/glfw3.h"
 #include "states/button_state.hpp"
 
+namespace states {
+
 auto InputState::before_frame() noexcept -> void {
     for (auto& state : m_key_states) {
         state = state & ~(ButtonFlag::Pressed | ButtonFlag::Released);
@@ -64,3 +66,5 @@ auto InputState::as_button_index(int key, int last) noexcept -> std::optional<si
     }
     return static_cast<size_t>(key);
 }
+
+} // namespace states

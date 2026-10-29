@@ -8,6 +8,8 @@
 #include <string>
 #include <utility>
 
+namespace rendering {
+
 class ShaderProgram {
   public:
     ShaderProgram(ShaderProgram&& other) noexcept
@@ -84,3 +86,5 @@ class ShaderProgram {
     GLuint m_id{0};
     bool m_linked{false}, m_link_failed{false};
 };
+
+} // namespace rendering

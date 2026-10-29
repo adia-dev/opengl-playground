@@ -1,5 +1,7 @@
 #pragma once
 
+namespace runtimes {
+
 struct GlfwRuntime {
     GlfwRuntime();
     ~GlfwRuntime();
@@ -8,3 +10,5 @@ struct GlfwRuntime {
     auto operator=(const GlfwRuntime&) -> GlfwRuntime& = delete;
     auto operator=(GlfwRuntime&&) -> GlfwRuntime& = delete;
 };
+
+} // namespace runtimes

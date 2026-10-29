@@ -31,7 +31,7 @@ file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
 add_executable(3d_balls ${PROJECT_SOURCES})
 target_include_directories(3d_balls PRIVATE src)
 target_compile_definitions(3d_balls PRIVATE GLFW_INCLUDE_NONE)
-target_compile_definitions(3d_balls PRIVATE RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_compile_definitions(3d_balls PRIVATE RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src/resources")
 target_link_libraries(3d_balls PRIVATE glfw glad)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")

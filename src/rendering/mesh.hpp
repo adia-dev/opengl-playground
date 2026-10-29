@@ -4,6 +4,8 @@
 #include <glad/gl.h>
 #include <vector>
 
+namespace rendering {
+
 template<typename T>
 struct Vector2 {
     T x, y;
@@ -62,3 +64,5 @@ class Mesh final {
     std::vector<Vector2f> m_vertices;
     GLuint m_vao{0}, m_vbo{0};
 };
+
+} // namespace rendering

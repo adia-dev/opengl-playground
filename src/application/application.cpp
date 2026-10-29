@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+namespace application {
+
 Application::Application(const char* title, int window_width, int window_height)
     : m_window{glfwCreateWindow(window_width, window_height, title, nullptr, nullptr)} {
     if (m_window.get() == nullptr) {
@@ -44,8 +46,8 @@ auto Application::init() -> void {
 
     const std::filesystem::path resource_dir(RESOURCE_DIR);
     auto vertex =
-        Shader::create(ShaderType::Vertex, std::string(resource_dir / "shaders" / "vertex.vert"));
-    auto fragment = Shader::create(ShaderType::Fragment,
+        rendering::Shader::create(rendering::ShaderType::Vertex, std::string(resource_dir / "shaders" / "vertex.vert"));
+    auto fragment = rendering::Shader::create(rendering::ShaderType::Fragment,
                                    std::string(resource_dir / "shaders" / "fragment.frag"));
     if (auto result = vertex.compile(); !result) {
         throw std::runtime_error(std::format("Failed to compile the vertex shader: {}; error: {}",
@@ -57,7 +59,7 @@ auto Application::init() -> void {
                                              result.error().path.c_str(),
                                              result.error().message));
     }
-    m_program.emplace(ShaderProgram::create());
+    m_program.emplace(rendering::ShaderProgram::create());
     if (auto result = (*m_program).link(vertex, fragment); !result) {
         throw std::runtime_error(
             std::format("Failed to link the shaders to the program, {}", result.error()));
@@ -98,28 +100,28 @@ auto Application::update() noexcept -> void {
     const float speed{0.1F};
 
     if (m_input_state.is_key_down(GLFW_KEY_LEFT)) {
-        m_mesh.update_vertices([&](std::vector<Vector2f>& vertices) -> void {
+        m_mesh.update_vertices([&](std::vector<rendering::Vector2f>& vertices) -> void {
             for (auto& vertex : vertices) {
                 vertex.x -= speed * static_cast<float>(delta_time);
             }
         });
     }
     if (m_input_state.is_key_down(GLFW_KEY_RIGHT)) {
-        m_mesh.update_vertices([&](std::vector<Vector2f>& vertices) -> void {
+        m_mesh.update_vertices([&](std::vector<rendering::Vector2f>& vertices) -> void {
             for (auto& vertex : vertices) {
                 vertex.x += speed * static_cast<float>(delta_time);
             }
         });
     }
     if (m_input_state.is_key_down(GLFW_KEY_UP)) {
-        m_mesh.update_vertices([&](std::vector<Vector2f>& vertices) -> void {
+        m_mesh.update_vertices([&](std::vector<rendering::Vector2f>& vertices) -> void {
             for (auto& vertex : vertices) {
                 vertex.y += speed * static_cast<float>(delta_time);
             }
         });
     }
     if (m_input_state.is_key_down(GLFW_KEY_DOWN)) {
-        m_mesh.update_vertices([&](std::vector<Vector2f>& vertices) -> void {
+        m_mesh.update_vertices([&](std::vector<rendering::Vector2f>& vertices) -> void {
             for (auto& vertex : vertices) {
                 vertex.y -= speed * static_cast<float>(delta_time);
             }
@@ -136,3 +138,5 @@ auto Application::render() const -> void {
     m_mesh.render();
     m_window.swap_buffers();
 }
+
+} // namespace application

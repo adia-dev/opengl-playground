@@ -12,6 +12,8 @@
 #include <string>
 #include <utility>
 
+namespace rendering {
+
 enum class ShaderType : uint8_t { Vertex, Fragment };
 struct ShaderError {
     std::string message;
@@ -133,3 +135,5 @@ class Shader final {
         return log;
     }
 };
+
+} // namespace rendering

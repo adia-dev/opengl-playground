@@ -3,6 +3,8 @@
 #include "GLFW/glfw3.h"
 #include <stdexcept>
 
+namespace runtimes {
+
 GlfwRuntime::GlfwRuntime() {
     if (glfwInit() == GLFW_FALSE) {
         throw std::runtime_error("Failed to initialize GLFW.");
@@ -18,3 +20,5 @@ GlfwRuntime::GlfwRuntime() {
 GlfwRuntime::~GlfwRuntime() {
     glfwTerminate();
 }
+
+} // namespace runtimes

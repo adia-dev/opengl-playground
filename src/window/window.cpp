@@ -1,5 +1,7 @@
 #include "window/window.hpp"
 
+namespace window {
+
 Window::Window(GLFWwindow* window) noexcept : m_handle{window} {}
 
 auto Window::window_size() const noexcept -> Size {
@@ -26,3 +28,5 @@ void Window::WindowDeleter::operator()(GLFWwindow* window) {
         glfwDestroyWindow(window);
     }
 }
+
+} // namespace window

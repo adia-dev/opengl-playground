@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <utility>
 
+namespace states {
+
 enum class ButtonFlag : uint8_t {
     None = 0,
     Pressed = 1 << 1,
@@ -33,3 +35,5 @@ constexpr auto has_flag(ButtonFlag value, ButtonFlag flag) noexcept
     -> bool {
     return (value & flag) == flag;
 }
+
+} // namespace states

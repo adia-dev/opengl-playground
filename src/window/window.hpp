@@ -3,6 +3,8 @@
 #include "GLFW/glfw3.h"
 #include <memory>
 
+namespace window {
+
 struct Size final {
     int width;
     int height;
@@ -29,3 +31,5 @@ class Window {
     using WindowPtr = std::unique_ptr<GLFWwindow, WindowDeleter>;
     WindowPtr m_handle{nullptr};
 };
+
+} // namespace window

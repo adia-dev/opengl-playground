@@ -7,6 +7,8 @@
 #include "states/input_state.hpp"
 #include "window/window.hpp"
 
+namespace application {
+
 class Application final {
   public:
     Application(const char* title, int window_width, int window_height);
@@ -26,16 +28,18 @@ class Application final {
     auto render() const -> void;
 
   private:
-    GlfwRuntime m_glfw_runtime;
-    Window m_window;
-    InputState m_input_state;
-    ApplicationState m_application_state;
-    Mesh m_mesh{{
+    runtimes::GlfwRuntime m_glfw_runtime;
+    window::Window m_window;
+    states::InputState m_input_state;
+    states::ApplicationState m_application_state;
+    rendering::Mesh m_mesh{{
         {.x = -0.5F, .y = -0.5F},
         {.x = 0.F, .y = 0.5F},
         {.x = 0.5F, .y = -0.5F},
     }};
-    std::optional<ShaderProgram> m_program;
+    std::optional<rendering::ShaderProgram> m_program;
 
     double m_last_time{};
 };
+
+} // namespace application

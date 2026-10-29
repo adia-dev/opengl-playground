@@ -3,7 +3,7 @@
 
 auto main(int argc, char* argv[]) -> int {
     try {
-        Application app{"OpenGL", 800, 600};
+        application::Application app{"OpenGL", 800, 600};
         app.run();
         std::println("~Goodbye~");
         return 0;
