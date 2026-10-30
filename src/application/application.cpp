@@ -43,12 +43,14 @@ auto Application::init() -> void {
     int w, h;
     glfwGetFramebufferSize(m_window.get(), &w, &h);
     glViewport(0, 0, w, h);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     const std::filesystem::path resource_dir(RESOURCE_DIR);
-    auto vertex =
-        rendering::Shader::create(rendering::ShaderType::Vertex, std::string(resource_dir / "shaders" / "vertex.vert"));
-    auto fragment = rendering::Shader::create(rendering::ShaderType::Fragment,
-                                   std::string(resource_dir / "shaders" / "fragment.frag"));
+    auto vertex = rendering::Shader::create(rendering::ShaderType::Vertex,
+                                            std::string(resource_dir / "shaders" / "vertex.vert"));
+    auto fragment = rendering::Shader::create(
+        rendering::ShaderType::Fragment, std::string(resource_dir / "shaders" / "fragment.frag"));
     if (auto result = vertex.compile(); !result) {
         throw std::runtime_error(std::format("Failed to compile the vertex shader: {}; error: {}",
                                              result.error().path.c_str(),
@@ -86,6 +88,12 @@ auto Application::register_callbacks() -> void {
             auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
             app->m_input_state.update_mouse_button(button, action);
         });
+
+    glfwSetCursorPosCallback(
+        m_window.get(), [](GLFWwindow* window, double xpos, double ypos) -> void {
+            auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+            app->m_input_state.update_mouse_pos({.x = xpos, .y = ypos});
+        });
 }
 
 auto Application::handle_events() noexcept -> void {
@@ -100,31 +108,42 @@ auto Application::update() noexcept -> void {
     const float speed{0.1F};
 
     if (m_input_state.is_key_down(GLFW_KEY_LEFT)) {
-        m_mesh.update_vertices([&](std::vector<rendering::Vector2f>& vertices) -> void {
+        m_mesh.update_vertices([&](std::vector<math::Vector2f>& vertices) -> void {
             for (auto& vertex : vertices) {
                 vertex.x -= speed * static_cast<float>(delta_time);
             }
         });
     }
     if (m_input_state.is_key_down(GLFW_KEY_RIGHT)) {
-        m_mesh.update_vertices([&](std::vector<rendering::Vector2f>& vertices) -> void {
+        m_mesh.update_vertices([&](std::vector<math::Vector2f>& vertices) -> void {
             for (auto& vertex : vertices) {
                 vertex.x += speed * static_cast<float>(delta_time);
             }
         });
     }
     if (m_input_state.is_key_down(GLFW_KEY_UP)) {
-        m_mesh.update_vertices([&](std::vector<rendering::Vector2f>& vertices) -> void {
+        m_mesh.update_vertices([&](std::vector<math::Vector2f>& vertices) -> void {
             for (auto& vertex : vertices) {
                 vertex.y += speed * static_cast<float>(delta_time);
             }
         });
     }
     if (m_input_state.is_key_down(GLFW_KEY_DOWN)) {
-        m_mesh.update_vertices([&](std::vector<rendering::Vector2f>& vertices) -> void {
+        m_mesh.update_vertices([&](std::vector<math::Vector2f>& vertices) -> void {
             for (auto& vertex : vertices) {
                 vertex.y -= speed * static_cast<float>(delta_time);
             }
+        });
+    }
+
+    if (m_input_state.is_mouse_button_pressed(GLFW_MOUSE_BUTTON_1)) {
+        m_mesh.update_vertices([&](std::vector<math::Vector2f>& vertices) -> void {
+            auto mouse_pos = m_input_state.mouse_pos();
+            int w, h;
+            glfwGetWindowSize(m_window.get(), &w, &h);
+            auto x = static_cast<float>((2 * mouse_pos.x / w) - 1.0);
+            auto y = static_cast<float>(1.0 - (2 * mouse_pos.y / h));
+            vertices.push_back({.x = x, .y = y});
         });
     }
 }

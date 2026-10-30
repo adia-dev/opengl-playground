@@ -25,8 +25,17 @@ auto InputState::update_mouse_button(int button, int action) noexcept -> void {
     }
 }
 
+auto InputState::update_mouse_pos(const math::Vector2d& mouse_pos) noexcept -> void {
+    m_mouse_pos = mouse_pos;
+}
+
 [[nodiscard]]
-auto InputState::is_key_pressed(int key) noexcept -> bool {
+auto InputState::mouse_pos() const noexcept -> const math::Vector2d& {
+    return m_mouse_pos;
+}
+
+[[nodiscard]]
+auto InputState::is_key_pressed(int key) const noexcept -> bool {
     if (auto i = as_button_index(key, GLFW_KEY_LAST); i) {
         return has_flag(m_key_states[*i], ButtonFlag::Pressed);
     }
@@ -34,7 +43,7 @@ auto InputState::is_key_pressed(int key) noexcept -> bool {
 }
 
 [[nodiscard]]
-auto InputState::is_key_down(int key) noexcept -> bool {
+auto InputState::is_key_down(int key) const noexcept -> bool {
     if (auto i = as_button_index(key, GLFW_KEY_LAST); i) {
         return has_flag(m_key_states[*i], ButtonFlag::Down);
     }
@@ -42,9 +51,33 @@ auto InputState::is_key_down(int key) noexcept -> bool {
 }
 
 [[nodiscard]]
-auto InputState::is_key_released(int key) noexcept -> bool {
+auto InputState::is_key_released(int key) const noexcept -> bool {
     if (auto i = as_button_index(key, GLFW_KEY_LAST); i) {
         return has_flag(m_key_states[*i], ButtonFlag::Released);
+    }
+    return false;
+}
+
+[[nodiscard]]
+auto InputState::is_mouse_button_pressed(int mouse_button) const noexcept -> bool {
+    if (auto i = as_button_index(mouse_button, GLFW_MOUSE_BUTTON_LAST); i) {
+        return has_flag(m_mouse_button_states[*i], ButtonFlag::Pressed);
+    }
+    return false;
+}
+
+[[nodiscard]]
+auto InputState::is_mouse_button_down(int mouse_button) const noexcept -> bool {
+    if (auto i = as_button_index(mouse_button, GLFW_MOUSE_BUTTON_LAST); i) {
+        return has_flag(m_mouse_button_states[*i], ButtonFlag::Down);
+    }
+    return false;
+}
+
+[[nodiscard]]
+auto InputState::is_mouse_button_released(int mouse_button) const noexcept -> bool {
+    if (auto i = as_button_index(mouse_button, GLFW_MOUSE_BUTTON_LAST); i) {
+        return has_flag(m_mouse_button_states[*i], ButtonFlag::Released);
     }
     return false;
 }
