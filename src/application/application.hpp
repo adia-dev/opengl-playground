@@ -25,18 +25,14 @@ class Application final {
     auto register_callbacks() -> void;
     auto handle_events() noexcept -> void;
     auto update() noexcept -> void;
-    auto render() const -> void;
+    auto render() -> void;
 
   private:
     runtimes::GlfwRuntime m_glfw_runtime;
     window::Window m_window;
     states::InputState m_input_state;
     states::ApplicationState m_application_state;
-    rendering::Mesh m_mesh{{
-        {.x = -0.5F, .y = -0.5F},
-        {.x = 0.F, .y = 0.5F},
-        {.x = 0.5F, .y = -0.5F},
-    }};
+    rendering::Mesh m_mesh;
     std::optional<rendering::ShaderProgram> m_program;
 
     double m_last_time{};

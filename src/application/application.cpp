@@ -5,11 +5,19 @@
 #include "rendering/shader_program.hpp"
 #include <filesystem>
 #include <glad/gl.h>
+#include <random>
 #include <stdexcept>
 #include <string>
-#include <vector>
 
 namespace application {
+
+inline static auto get_random_float() -> float {
+    thread_local std::random_device rd;
+    thread_local std::mt19937 gen(rd());
+    thread_local std::uniform_real_distribution<float> dis(0.05F, 1.0F);
+
+    return dis(gen);
+}
 
 Application::Application(const char* title, int window_width, int window_height)
     : m_window{glfwCreateWindow(window_width, window_height, title, nullptr, nullptr)} {
@@ -25,6 +33,18 @@ void Application::run() {
     register_callbacks();
 
     m_mesh.init();
+    m_mesh.add_vertex({
+        .position = {.x = -0.5F, .y = -0.5F},
+        .color = {.r = 1.0F, .g = 0.0F, .b = 0.0F, .a = 1.0F},
+    });
+    m_mesh.add_vertex({
+        .position = {.x = 0.0F, .y = 0.5F},
+        .color = {.r = 0.0F, .g = 1.0F, .b = 0.0F, .a = 1.0F},
+    });
+    m_mesh.add_vertex({
+        .position = {.x = 0.5F, .y = -0.5F},
+        .color = {.r = 0.0F, .g = 0.0F, .b = 1.0F, .a = 1.0F},
+    });
 
     while (glfwWindowShouldClose(m_window.get()) == 0) {
         handle_events();
@@ -108,51 +128,54 @@ auto Application::update() noexcept -> void {
     const float speed{0.1F};
 
     if (m_input_state.is_key_down(GLFW_KEY_LEFT)) {
-        m_mesh.update_vertices([&](std::vector<math::Vector2f>& vertices) -> void {
+        m_mesh.update_vertices([&](std::vector<rendering::Vertex>& vertices) -> void {
             for (auto& vertex : vertices) {
-                vertex.x -= speed * static_cast<float>(delta_time);
+                vertex.position.x -= speed * static_cast<float>(delta_time);
             }
         });
     }
     if (m_input_state.is_key_down(GLFW_KEY_RIGHT)) {
-        m_mesh.update_vertices([&](std::vector<math::Vector2f>& vertices) -> void {
+        m_mesh.update_vertices([&](std::vector<rendering::Vertex>& vertices) -> void {
             for (auto& vertex : vertices) {
-                vertex.x += speed * static_cast<float>(delta_time);
+                vertex.position.x += speed * static_cast<float>(delta_time);
             }
         });
     }
     if (m_input_state.is_key_down(GLFW_KEY_UP)) {
-        m_mesh.update_vertices([&](std::vector<math::Vector2f>& vertices) -> void {
+        m_mesh.update_vertices([&](std::vector<rendering::Vertex>& vertices) -> void {
             for (auto& vertex : vertices) {
-                vertex.y += speed * static_cast<float>(delta_time);
+                vertex.position.y += speed * static_cast<float>(delta_time);
             }
         });
     }
     if (m_input_state.is_key_down(GLFW_KEY_DOWN)) {
-        m_mesh.update_vertices([&](std::vector<math::Vector2f>& vertices) -> void {
+        m_mesh.update_vertices([&](std::vector<rendering::Vertex>& vertices) -> void {
             for (auto& vertex : vertices) {
-                vertex.y -= speed * static_cast<float>(delta_time);
+                vertex.position.y -= speed * static_cast<float>(delta_time);
             }
         });
     }
 
     if (m_input_state.is_mouse_button_pressed(GLFW_MOUSE_BUTTON_1)) {
-        m_mesh.update_vertices([&](std::vector<math::Vector2f>& vertices) -> void {
+        m_mesh.update_vertices([&](std::vector<rendering::Vertex>& vertices) -> void {
             auto mouse_pos = m_input_state.mouse_pos();
             int w, h;
             glfwGetWindowSize(m_window.get(), &w, &h);
             auto x = static_cast<float>((2 * mouse_pos.x / w) - 1.0);
             auto y = static_cast<float>(1.0 - (2 * mouse_pos.y / h));
-            vertices.push_back({.x = x, .y = y});
+            vertices.push_back({
+                .position = {.x = x, .y = y},
+                .color = {.r = get_random_float(), .g = get_random_float(), .b = get_random_float(), .a = get_random_float()},
+            });
         });
     }
 }
 
-auto Application::render() const -> void {
+auto Application::render() -> void {
     if (m_program) {
         (*m_program).use();
     }
-    glClearColor(m_application_state.red_intensity, 1.0, 0.2F, 1.0);
+    glClearColor(m_application_state.red_intensity, 0.1F, 0.2F, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
     m_mesh.render();
     m_window.swap_buffers();
