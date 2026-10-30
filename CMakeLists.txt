@@ -24,6 +24,9 @@ FetchContent_MakeAvailable(glfw)
 add_library(glad STATIC third_party/glad/src/gl.c)
 target_include_directories(glad PUBLIC third_party/glad/include)
 
+add_library(stb_image STATIC third_party/stb/stb_image.c)
+target_include_directories(stb_image PUBLIC third_party/stb)
+
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
@@ -32,7 +35,7 @@ add_executable(3d_balls ${PROJECT_SOURCES})
 target_include_directories(3d_balls PRIVATE src)
 target_compile_definitions(3d_balls PRIVATE GLFW_INCLUDE_NONE)
 target_compile_definitions(3d_balls PRIVATE RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src/resources")
-target_link_libraries(3d_balls PRIVATE glfw glad)
+target_link_libraries(3d_balls PRIVATE glfw glad stb_image)
 
 include(CTest)
 if(BUILD_TESTING)
@@ -49,6 +52,9 @@ if(BUILD_TESTING)
     target_link_libraries(input_state_tests PRIVATE Catch2::Catch2WithMain glfw)
     include(Catch)
     catch_discover_tests(input_state_tests)
+    add_executable(image_tests tests/image_tests.cpp)
+    target_link_libraries(image_tests PRIVATE Catch2::Catch2WithMain stb_image)
+    catch_discover_tests(image_tests)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
