@@ -6,6 +6,12 @@ A small C++23 + OpenGL starter. The first milestone is intentionally simple: ope
 
 Requirements: Xcode Command Line Tools, CMake 3.24+, and Ninja. GLFW is downloaded by CMake on the first configure. The generated GLAD 2.0.8 OpenGL 3.3 Core loader is included in `third_party/glad`.
 
+The selected compiler's C++ standard library must support `std::views::enumerate`.
+To select a different toolchain locally, create an ignored `CMakeUserPresets.json`
+that inherits `debug`, uses a separate build directory, and sets
+`CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER`. Run it with
+`CMAKE_PRESET=<preset-name> BUILD_DIR=<build-directory> ./run.sh`.
+
 The project also vendors stb_image in `third_party/stb` (upstream commit
 `f0569113c93ad095470c54bf34a17b36646bbbb5`). Include `<stb_image.h>` to decode
 images and release returned pixel data with `stbi_image_free`. Its implementation

@@ -4,6 +4,9 @@ set -euo pipefail
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
-cmake --preset debug
-cmake --build --preset debug
-exec "$PROJECT_DIR/build/3d_balls" "$@"
+PRESET="${CMAKE_PRESET:-debug}"
+BUILD_DIR="${BUILD_DIR:-build}"
+
+cmake --preset "$PRESET"
+cmake --build --preset "$PRESET"
+exec "$PROJECT_DIR/$BUILD_DIR/3d_balls" "$@"
