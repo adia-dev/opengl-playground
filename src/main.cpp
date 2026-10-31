@@ -1,4 +1,5 @@
 #include "application/application.hpp"
+#include <exception>
 #include <print>
 
 auto main(int argc, char* argv[]) -> int {

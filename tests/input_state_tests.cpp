@@ -1,5 +1,7 @@
 #include "states/input_state.hpp"
+#include "GLFW/glfw3.h"
 #include <catch2/catch_test_macros.hpp>
+#include <initializer_list>
 
 TEST_CASE("A key press and release are visible for one frame") {
     states::InputState input;

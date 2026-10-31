@@ -1,6 +1,8 @@
 #include "states/input_state.hpp"
 #include "GLFW/glfw3.h"
 #include "states/button_state.hpp"
+#include <cstddef>
+#include <optional>
 
 namespace states {
 
@@ -93,11 +95,11 @@ auto InputState::update_button(ButtonFlag& state, int button, int action) noexce
     }
 }
 
-auto InputState::as_button_index(int key, int last) noexcept -> std::optional<size_t> {
+auto InputState::as_button_index(int key, int last) noexcept -> std::optional<std::size_t> {
     if (key < 0 || key > last) {
         return std::nullopt;
     }
-    return static_cast<size_t>(key);
+    return static_cast<std::size_t>(key);
 }
 
 } // namespace states

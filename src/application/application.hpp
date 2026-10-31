@@ -2,17 +2,20 @@
 
 #include "rendering/mesh.hpp"
 #include "rendering/shader_program.hpp"
+#include "rendering/texture.hpp"
 #include "runtimes/glfw_runtime.hpp"
 #include "states/application_state.hpp"
 #include "states/input_state.hpp"
 #include "window/window.hpp"
+#include <filesystem>
+#include <optional>
+#include <vector>
 
 namespace application {
 
 class Application final {
   public:
     Application(const char* title, int window_width, int window_height);
-    ~Application();
     void run();
 
     Application(const Application&) = delete;
@@ -21,10 +24,11 @@ class Application final {
     auto operator=(Application&&) -> Application& = delete;
 
   private:
+    void load_texture(const std::filesystem::path& texture_path);
     auto init() -> void;
     auto register_callbacks() -> void;
     auto handle_events() noexcept -> void;
-    auto update() noexcept -> void;
+    auto update() -> void;
     auto render() -> void;
 
   private:
@@ -34,6 +38,7 @@ class Application final {
     states::ApplicationState m_application_state;
     rendering::Mesh m_mesh;
     std::optional<rendering::ShaderProgram> m_program;
+    std::vector<std::optional<rendering::Texture2D>> m_textures;
 
     double m_last_time{};
 };

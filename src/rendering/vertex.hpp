@@ -8,6 +8,7 @@ namespace rendering {
 struct Vertex {
     math::Vector2f position;
     math::Color color;
+    math::Vector2f uv;
 };
 
 } // namespace rendering

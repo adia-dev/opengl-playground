@@ -1,90 +1,68 @@
 #pragma once
 
-#include "rendering/mesh.hpp"
 #include "rendering/shader.hpp"
+#include <cstdio>
 #include <expected>
-#include <format>
-#include <stdexcept>
+#include <glad/gl.h>
+#include <print>
 #include <string>
-#include <utility>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace rendering {
 
 class ShaderProgram {
   public:
-    ShaderProgram(ShaderProgram&& other) noexcept
-        : m_id(std::exchange(other.m_id, 0)), m_linked(std::exchange(other.m_linked, false)),
-          m_link_failed(std::exchange(other.m_link_failed, false)) {}
+    ShaderProgram(ShaderProgram&& other) noexcept;
 
     ShaderProgram(const ShaderProgram&) = delete;
     auto operator=(const ShaderProgram&) -> ShaderProgram& = delete;
     auto operator=(ShaderProgram&&) -> ShaderProgram& = delete;
 
-    ~ShaderProgram() {
-        glDeleteProgram(m_id);
-    }
+    ~ShaderProgram();
 
     [[nodiscard]]
-    static auto create() -> ShaderProgram {
-        GLuint program_id = glCreateProgram();
-        if (program_id == 0) {
-            throw std::runtime_error("Failed to create a shader program.");
-        }
+    static auto create() -> ShaderProgram;
 
-        return ShaderProgram{program_id};
-    }
+    auto use() const -> bool;
 
-    auto use() const -> void {
-        if (!m_linked) {
-            throw std::runtime_error("Cannot use a program that hasn't been linked yet.");
-        }
-        glUseProgram(m_id);
-    }
+    auto set_int(int value, const std::string& name) const -> void;
+    auto set_float(float value, const std::string& name) const -> void;
 
     [[nodiscard]]
     auto link(const Shader& vertex_shader, const Shader& fragment_shader)
-        -> std::expected<void, std::string> {
-        if (m_linked) {
-            throw std::runtime_error("Unsupported, cannot relink a program for now.");
-        }
-        if (m_link_failed) {
-            throw std::runtime_error("Unsupported, cannot relink a program that is dirty.");
-        }
-        if (vertex_shader.type() == fragment_shader.type()) {
-            return std::unexpected("Unsupported operation: The shader program is only able to link "
-                                   "two shaders of different type.");
-        }
-        glAttachShader(m_id, vertex_shader.id());
-        glAttachShader(m_id, fragment_shader.id());
-        glLinkProgram(m_id);
-
-        int success{};
-        glGetProgramiv(m_id, GL_LINK_STATUS, &success);
-        if (success == GL_TRUE) {
-            m_linked = true;
-            return {};
-        }
-
-        m_link_failed = true;
-
-        int length{};
-        glGetProgramiv(m_id, GL_INFO_LOG_LENGTH, &length);
-        if (length <= 1) {
-            return std::unexpected(
-                std::format("Program({}) failed to link due to an error.", m_id));
-        }
-
-        std::string log(static_cast<size_t>(length), '\0');
-        GLsizei written{};
-        glGetProgramInfoLog(m_id, length, &written, log.data());
-        log.resize(static_cast<size_t>(written));
-        return std::unexpected(std::move(log));
-    }
+        -> std::expected<void, std::string>;
 
   private:
-    explicit ShaderProgram(GLuint id) : m_id(id) {}
+    explicit ShaderProgram(GLuint id);
     GLuint m_id{0};
     bool m_linked{false}, m_link_failed{false};
+    mutable std::unordered_set<std::string> m_reported_missing_uniforms;
+    mutable std::unordered_map<std::string, int> m_cached_locations;
+
+    template <typename T, typename... K>
+    auto set_value(T glFun, const std::string& name, K... args) const -> void {
+        if (!use()) {
+            return;
+        }
+        if (auto it = m_cached_locations.find(name); it != m_cached_locations.end()) {
+            glFun(it->second, args...);
+            return;
+        }
+
+        int location = glGetUniformLocation(m_id, name.c_str());
+        if (location == -1) {
+            if (m_reported_missing_uniforms.insert(name).second) {
+                std::println(stderr,
+                             "Shader program {}: uniform '{}' was not found or is inactive.",
+                             m_id,
+                             name);
+            }
+            return;
+        }
+        m_cached_locations.insert_or_assign(name, location);
+        glFun(location, args...);
+    }
 };
 
 } // namespace rendering

@@ -4,6 +4,7 @@
 #include "math/vector2.hpp"
 #include "states/button_state.hpp"
 #include <array>
+#include <cstddef>
 #include <optional>
 
 namespace states {
@@ -38,7 +39,7 @@ class InputState final {
     math::Vector2d m_mouse_pos{};
 
     [[nodiscard]]
-    static auto as_button_index(int key, int last) noexcept -> std::optional<size_t>;
+    static auto as_button_index(int key, int last) noexcept -> std::optional<std::size_t>;
     static auto update_button(ButtonFlag& state, int button, int action) noexcept -> void;
 };
 
