@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <format>
 #include <glad/gl.h>
+#include <print>
 #include <random>
 #include <stb_image.h>
 #include <stdexcept>
@@ -122,15 +123,15 @@ auto Application::init() -> void {
     }
     m_program->use();
 
-    load_texture(resource_dir / "textures" / "galuf.png");
-    load_texture(resource_dir / "textures" / "bartz.png");
+    load_texture(resource_dir / "textures" / "choso.png");
+    // load_texture(resource_dir / "textures" / "bartz.png");
 
     if (std::cmp_greater(m_textures.size(), rendering::Texture2D::max_fragment_texture_units())) {
         throw std::runtime_error("Too many textures for the fragment shader.");
     }
 
     program.set_int(0, "Texture1");
-    program.set_int(1, "Texture2");
+    // program.set_int(1, "Texture2");
 }
 
 auto Application::register_callbacks() -> void {
@@ -158,6 +159,13 @@ auto Application::register_callbacks() -> void {
         m_window.get(), [](GLFWwindow* window, double xpos, double ypos) -> void {
             auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
             app->m_input_state.update_mouse_pos({.x = xpos, .y = ypos});
+
+            int w, h;
+            glfwGetWindowSize(app->m_window.get(), &w, &h);
+            auto x = static_cast<float>((2 * xpos / w) - 1.0);
+            auto y = static_cast<float>(1.0 - (2 * ypos / h));
+            app->m_program->set_vec("MousePos", x, y);
+            std::println("x: {}, y: {}", x, y);
         });
 }
 

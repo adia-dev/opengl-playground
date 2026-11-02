@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rendering/shader.hpp"
+#include <array>
 #include <cstdio>
 #include <expected>
 #include <glad/gl.h>
@@ -28,6 +29,21 @@ class ShaderProgram {
 
     auto set_int(int value, const std::string& name) const -> void;
     auto set_float(float value, const std::string& name) const -> void;
+    template <typename... Args> auto set_vec(const std::string& name, Args... args) const -> void {
+        constexpr auto size = sizeof...(args);
+        static_assert(size >= 2 && size <= 4, "A vector must have 2, 3, or 4 components.");
+        const std::array<float, size> data{static_cast<float>(args)...};
+
+        if constexpr (size == 2) {
+            set_value(glUniform2fv, name, 1, data.data());
+        } else if constexpr (size == 3) {
+            set_value(glUniform3fv, name, 1, data.data());
+        } else if constexpr (size == 4) {
+            set_value(glUniform4fv, name, 1, data.data());
+        }
+    }
+
+    // TODO: Add an overload accepting glm::vec2 and forward its x and y to set_vec.
 
     [[nodiscard]]
     auto link(const Shader& vertex_shader, const Shader& fragment_shader)
