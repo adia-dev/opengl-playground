@@ -21,6 +21,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glfw)
 
+FetchContent_Declare(
+    glm
+    GIT_REPOSITORY https://github.com/g-truc/glm.git
+    GIT_TAG 1.0.1
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(glm)
+
 add_library(glad STATIC third_party/glad/src/gl.c)
 target_include_directories(glad PUBLIC third_party/glad/include)
 
@@ -33,9 +41,15 @@ file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
 )
 add_executable(3d_balls ${PROJECT_SOURCES})
 target_include_directories(3d_balls PRIVATE src)
+target_include_directories(3d_balls SYSTEM PRIVATE
+    ${glfw_SOURCE_DIR}/include
+    ${glm_SOURCE_DIR}
+    third_party/glad/include
+    third_party/stb
+)
 target_compile_definitions(3d_balls PRIVATE GLFW_INCLUDE_NONE)
 target_compile_definitions(3d_balls PRIVATE RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src/resources")
-target_link_libraries(3d_balls PRIVATE glfw glad stb_image)
+target_link_libraries(3d_balls PRIVATE glfw glad stb_image glm::glm)
 
 include(CTest)
 if(BUILD_TESTING)
