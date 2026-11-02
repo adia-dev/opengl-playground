@@ -53,6 +53,8 @@ void Mesh::init() {
                  GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
+    // OpenGL interprets the pointer argument as an offset into the bound VBO.
+    // NOLINTBEGIN(performance-no-int-to-ptr)
     glVertexAttribPointer(1,
                           4,
                           GL_FLOAT,
@@ -65,6 +67,7 @@ void Mesh::init() {
                           GL_FALSE,
                           sizeof(Vertex),
                           reinterpret_cast<const void*>(offsetof(Vertex, uv)));
+    // NOLINTEND(performance-no-int-to-ptr)
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);

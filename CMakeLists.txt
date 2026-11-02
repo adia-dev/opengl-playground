@@ -26,8 +26,12 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/g-truc/glm.git
     GIT_TAG 1.0.1
     GIT_SHALLOW TRUE
+    # Fetch the headers without running GLM's CMake project or building its library.
+    SOURCE_SUBDIR unused
 )
 FetchContent_MakeAvailable(glm)
+add_library(glm_headers INTERFACE)
+target_include_directories(glm_headers SYSTEM INTERFACE "${glm_SOURCE_DIR}")
 
 add_library(glad STATIC third_party/glad/src/gl.c)
 target_include_directories(glad PUBLIC third_party/glad/include)
@@ -43,13 +47,12 @@ add_executable(3d_balls ${PROJECT_SOURCES})
 target_include_directories(3d_balls PRIVATE src)
 target_include_directories(3d_balls SYSTEM PRIVATE
     ${glfw_SOURCE_DIR}/include
-    ${glm_SOURCE_DIR}
     third_party/glad/include
     third_party/stb
 )
 target_compile_definitions(3d_balls PRIVATE GLFW_INCLUDE_NONE)
 target_compile_definitions(3d_balls PRIVATE RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src/resources")
-target_link_libraries(3d_balls PRIVATE glfw glad stb_image glm::glm)
+target_link_libraries(3d_balls PRIVATE glfw glad stb_image glm_headers)
 
 include(CTest)
 if(BUILD_TESTING)

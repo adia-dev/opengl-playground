@@ -11,9 +11,9 @@
 #include <format>
 #include <glad/gl.h>
 #include <random>
+#include <stb_image.h>
 #include <stdexcept>
 #include <string>
-#include <stb_image.h>
 #include <utility>
 #include <vector>
 
@@ -115,7 +115,7 @@ auto Application::init() -> void {
                                              result.error().path.c_str(),
                                              result.error().message));
     }
-    m_program.emplace(rendering::ShaderProgram::create());
+    auto& program = m_program.emplace(rendering::ShaderProgram::create());
     if (auto result = m_program->link(vertex, fragment); !result) {
         throw std::runtime_error(
             std::format("Failed to link the shaders to the program, {}", result.error()));
@@ -129,8 +129,8 @@ auto Application::init() -> void {
         throw std::runtime_error("Too many textures for the fragment shader.");
     }
 
-    m_program->set_int(0, "Texture1");
-    m_program->set_int(1, "Texture2");
+    program.set_int(0, "Texture1");
+    program.set_int(1, "Texture2");
 }
 
 auto Application::register_callbacks() -> void {
@@ -172,8 +172,13 @@ auto Application::update() -> void {
     m_last_time = current_time;
     const float speed{0.1F};
 
+    if (!m_program) {
+        throw std::logic_error("Cannot update before the shader program is initialized.");
+    }
     m_program->set_float(static_cast<float>(current_time), "t");
 
+    // TODO: Keep a position for the mesh and use glm::translate to build a model matrix.
+    // Pass that matrix to the vertex shader instead of moving every vertex on the CPU.
     if (m_input_state.is_key_down(GLFW_KEY_LEFT)) {
         m_mesh.update_vertices([&](std::vector<rendering::Vertex>& vertices) -> void {
             for (auto& vertex : vertices) {
@@ -212,10 +217,13 @@ auto Application::update() -> void {
             auto y = static_cast<float>(1.0 - (2 * mouse_pos.y / h));
             vertices.push_back({
                 .position = {.x = x, .y = y},
-                .color = {.r = get_random_float(),
-                          .g = get_random_float(),
-                          .b = get_random_float(),
-                          .a = get_random_float()},
+                .color =
+                    {
+                        .r = get_random_float(),
+                        .g = get_random_float(),
+                        .b = get_random_float(),
+                        .a = get_random_float(),
+                    },
             });
         });
     }

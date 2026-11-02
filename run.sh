@@ -8,5 +8,5 @@ PRESET="${CMAKE_PRESET:-debug}"
 BUILD_DIR="${BUILD_DIR:-build}"
 
 cmake --preset "$PRESET"
-cmake --build --preset "$PRESET"
+cmake --build --preset "$PRESET" --target 3d_balls
 exec "$PROJECT_DIR/$BUILD_DIR/3d_balls" "$@"
