@@ -1,50 +1,21 @@
-# 3D Balls
+# OpenGL Playground
 
-A small C++23 + OpenGL starter. The first milestone is intentionally simple: open a window, create an OpenGL 3.3 Core context, and clear the screen each frame.
+A small C++23 project for learning OpenGL. Right now it renders a textured box you can move, rotate, and scale.
 
-## Build and run (macOS)
+## Build and run
 
-Requirements: Xcode Command Line Tools, CMake 3.24+, and Ninja. GLFW is downloaded by CMake on the first configure. The generated GLAD 2.0.8 OpenGL 3.3 Core loader is included in `third_party/glad`.
-
-The selected compiler's C++ standard library must support `std::views::enumerate`.
-To select a different toolchain locally, create an ignored `CMakeUserPresets.json`
-that inherits `debug`, uses a separate build directory, and sets
-`CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER`. Run it with
-`CMAKE_PRESET=<preset-name> BUILD_DIR=<build-directory> ./run.sh`.
-
-The project also vendors stb_image in `third_party/stb` (upstream commit
-`f0569113c93ad095470c54bf34a17b36646bbbb5`). Include `<stb_image.h>` to decode
-images and release returned pixel data with `stbi_image_free`. Its implementation
-is compiled once in `third_party/stb/stb_image.c`.
+On macOS, install the Xcode Command Line Tools, CMake 3.24 or newer, and Ninja. The first build downloads GLFW, GLM, and Catch2, so it needs an internet connection.
 
 ```sh
 ./run.sh
 ```
 
-`run.sh` configures with the `debug` preset, builds the app, then launches it. Close the window or press **Esc** to quit.
+Use A/D to move left and right, W/S to move along Z, and the arrow keys to rotate or scale. Press Space to switch the rotation axis and Escape to quit.
 
 ## Tests
-
-Tests use Catch2 and CTest. The first configure downloads Catch2 when testing is enabled.
 
 ```sh
 cmake --preset debug
 cmake --build --preset debug
 ctest --test-dir build --output-on-failure
 ```
-
-The input-state tests run without opening a window or creating an OpenGL context.
-To skip the test dependency, configure with `cmake --preset debug -DBUILD_TESTING=OFF`;
-use `-DBUILD_TESTING=ON` to enable it again.
-
-## C++ workflow
-
-Application code lives under `src/`, grouped by responsibility. Headers sit next to their implementation files; small types and constexpr helpers can stay header-only. `src/resources/shaders/` contains shader sources, and `third_party/` contains vendored dependencies. A top-level `include/` directory is useful if the project later exposes a public library API, but is unnecessary for these application-private headers.
-
-- `.clang-format` defines the shared LLVM-based C++23 style. Run `cmake --build --preset debug --target format` to format project C++ sources, or use `format-check` to check them. Install `clang-format` if it is not already available; CMake prefers the Homebrew LLVM formatter on macOS.
-- `.clang-tidy` enables the standard bugprone, analyzer, performance, modernization, and readability check groups in clangd. Neovim already starts clangd with `--clang-tidy`.
-- To run clang-tidy during compilation, install `clang-tidy` and configure with `cmake --preset debug -DENABLE_CLANG_TIDY=ON`.
-- To enable runtime memory and undefined-behavior checks, configure with `cmake --preset debug -DENABLE_SANITIZERS=ON`, then build and run as usual.
-- `.clangd` enables parameter-name and deduced-type inlay hints. In Neovim, toggle them for the current buffer with `<leader>ci`.
-
-The first configure needs an internet connection to download GLFW 3.4. This project uses GLAD 2's `glad/gl.h` header and `gladLoadGL` initializer; LearnOpenGL examples may show GLAD 1's `glad/glad.h` and `gladLoadGLLoader` names. On macOS, OpenGL contexts are available up to 4.1 Core; this starter asks for 3.3 Core so its initial context works with a broad range of hardware. OpenGL is deprecated by Apple but remains useful for learning and for this project.
