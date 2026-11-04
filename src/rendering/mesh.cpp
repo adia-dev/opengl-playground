@@ -38,7 +38,7 @@ auto Mesh::render() noexcept -> void {
     }
     glBindVertexArray(m_vao);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, static_cast<GLsizei>(m_vertices.size()));
+    glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(m_vertices.size()));
 }
 
 void Mesh::init() {
@@ -48,16 +48,10 @@ void Mesh::init() {
     glBindVertexArray(m_vao);
     upload_data();
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
     // OpenGL interprets the pointer argument as an offset into the bound VBO.
     // NOLINTBEGIN(performance-no-int-to-ptr)
     glVertexAttribPointer(1,
-                          4,
-                          GL_FLOAT,
-                          GL_FALSE,
-                          sizeof(Vertex),
-                          reinterpret_cast<const void*>(offsetof(Vertex, color)));
-    glVertexAttribPointer(2,
                           2,
                           GL_FLOAT,
                           GL_FALSE,
@@ -67,7 +61,6 @@ void Mesh::init() {
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
 }
 
 void Mesh::upload_data() {

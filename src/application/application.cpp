@@ -1,5 +1,6 @@
 #include "application/application.hpp"
 #include "GLFW/glfw3.h"
+#include "rendering/box.hpp"
 #include "rendering/image.hpp"
 #include "rendering/mesh.hpp"
 #include "rendering/shader.hpp"
@@ -11,7 +12,6 @@
 #include <format>
 #include <glad/gl.h>
 #include <print>
-#include <random>
 #include <stb_image.h>
 #include <stdexcept>
 #include <string>
@@ -19,14 +19,6 @@
 #include <vector>
 
 namespace application {
-
-inline static auto get_random_float() -> float {
-    thread_local std::random_device rd;
-    thread_local std::mt19937 gen(rd());
-    thread_local std::uniform_real_distribution<float> dis(0.05F, 1.0F);
-
-    return dis(gen);
-}
 
 Application::Application(const char* title, int window_width, int window_height)
     : m_window{glfwCreateWindow(window_width, window_height, title, nullptr, nullptr)} {
@@ -40,27 +32,9 @@ void Application::run() {
     register_callbacks();
 
     m_scene_object.mesh().init();
-    m_scene_object.mesh().add_vertices({
-        {
-            .position = {.x = -0.5F, .y = -0.5F},
-            .color = {.r = 1.0F, .g = 1.0F, .b = 1.0F, .a = 1.0F},
-            .uv = {.x = 0.0F, .y = 0.0F},
-        },
-        {
-            .position = {.x = 0.5F, .y = -0.5F},
-            .color = {.r = 1.0F, .g = 1.0F, .b = 1.0F, .a = 1.0F},
-            .uv = {.x = 1.0F, .y = 0.0F},
-        },
-        {
-            .position = {.x = 0.5F, .y = 0.5F},
-            .color = {.r = 1.0F, .g = 1.0F, .b = 1.0F, .a = 1.0F},
-            .uv = {.x = 1.0F, .y = 1.0F},
-        },
-        {
-            .position = {.x = -0.5F, .y = 0.5F},
-            .color = {.r = 1.0F, .g = 1.0F, .b = 1.0F, .a = 1.0F},
-            .uv = {.x = 0.0F, .y = 1.0F},
-        },
+    m_scene_object.mesh().update_vertices([](std::vector<rendering::Vertex>& vertices) -> void {
+        const auto box = rendering::box_vertices();
+        vertices.insert(vertices.end(), box.begin(), box.end());
     });
 
     m_last_time = glfwGetTime();
@@ -98,6 +72,7 @@ auto Application::init() -> void {
     int w, h;
     glfwGetFramebufferSize(m_window.get(), &w, &h);
     glViewport(0, 0, w, h);
+    glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -185,30 +160,41 @@ auto Application::update() -> void {
     }
     m_program->set_float(static_cast<float>(current_time), "t");
 
-    if (m_input_state.is_key_down(GLFW_KEY_LEFT)) {
-        m_scene_object.move(-speed * static_cast<float>(delta_time), 0.0F);
-    } else if (m_input_state.is_key_down(GLFW_KEY_RIGHT)) {
-        m_scene_object.move(speed * static_cast<float>(delta_time), 0.0F);
-    }
-
-    if (m_input_state.is_key_down(GLFW_KEY_UP)) {
-        m_scene_object.move(0.0F, speed * static_cast<float>(delta_time));
-    } else if (m_input_state.is_key_down(GLFW_KEY_DOWN)) {
-        m_scene_object.move(0.0F, -speed * static_cast<float>(delta_time));
-    }
-
-    if (m_input_state.is_key_down(GLFW_KEY_Q)) {
-        m_scene_object.rotate(0.0F, 0.0F, speed * static_cast<float>(delta_time));
-    } else if (m_input_state.is_key_down(GLFW_KEY_E)) {
-        m_scene_object.rotate(0.0F, 0.0F, -speed * static_cast<float>(delta_time));
+    if (m_input_state.is_key_down(GLFW_KEY_A)) {
+        m_scene_object.move(-speed * static_cast<float>(delta_time), 0.0F, 0.0F);
+    } else if (m_input_state.is_key_down(GLFW_KEY_D)) {
+        m_scene_object.move(speed * static_cast<float>(delta_time), 0.0F, 0.0F);
     }
 
     if (m_input_state.is_key_down(GLFW_KEY_W)) {
-        m_scene_object.scale(
-            speed * static_cast<float>(delta_time), speed * static_cast<float>(delta_time), 0.0F);
+        m_scene_object.move(0.0F, 0.0F, speed * static_cast<float>(delta_time));
     } else if (m_input_state.is_key_down(GLFW_KEY_S)) {
-        m_scene_object.scale(
-            -speed * static_cast<float>(delta_time), -speed * static_cast<float>(delta_time), 0.0F);
+        m_scene_object.move(0.0F, 0.0F, -speed * static_cast<float>(delta_time));
+    }
+
+    static int axis{0};
+    axis = (axis + static_cast<int>(m_input_state.is_key_pressed(GLFW_KEY_SPACE))) % 3;
+    if (m_input_state.is_key_down(GLFW_KEY_LEFT) || m_input_state.is_key_down(GLFW_KEY_RIGHT)) {
+        float direction = m_input_state.is_key_down(GLFW_KEY_LEFT) ? -1.F : 1.F;
+        switch (axis) {
+        case 0:
+            m_scene_object.rotate(direction * speed * static_cast<float>(delta_time), 0.0F, 0.0F);
+            break;
+        case 1:
+            m_scene_object.rotate(0.0F, direction * speed * static_cast<float>(delta_time), 0.0F);
+            break;
+        case 2:
+            m_scene_object.rotate(0.0F, 0.0F, direction * speed * static_cast<float>(delta_time));
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (m_input_state.is_key_down(GLFW_KEY_UP)) {
+        m_scene_object.scale(speed * static_cast<float>(delta_time));
+    } else if (m_input_state.is_key_down(GLFW_KEY_DOWN)) {
+        m_scene_object.scale(-speed * static_cast<float>(delta_time));
     }
 
     if (m_input_state.is_mouse_button_pressed(GLFW_MOUSE_BUTTON_1)) {
@@ -221,13 +207,6 @@ auto Application::update() -> void {
                 auto y = static_cast<float>(1.0 - (2 * mouse_pos.y / h));
                 vertices.push_back({
                     .position = {.x = x, .y = y},
-                    .color =
-                        {
-                            .r = get_random_float(),
-                            .g = get_random_float(),
-                            .b = get_random_float(),
-                            .a = get_random_float(),
-                        },
                 });
             });
     }
@@ -238,7 +217,7 @@ auto Application::render() -> void {
         (*m_program).use();
     }
     glClearColor(m_application_state.red_intensity, 0.1F, 0.2F, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     for (std::size_t i = 0; i < m_textures.size(); ++i) {
         const auto& texture = m_textures[i];
         if (texture) {

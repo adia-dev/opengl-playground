@@ -49,7 +49,7 @@ auto ShaderProgram::set_float(float value, const std::string& name) const -> voi
 }
 
 auto ShaderProgram::set_mat4(const glm::mat4& mat, const std::string& name) const -> void {
-    set_value(glUniformMatrix4fv, name, 1, GL_FALSE, glm::value_ptr(mat));
+    set_value(glUniformMatrix4fv, name, 1, static_cast<GLboolean>(GL_FALSE), glm::value_ptr(mat));
 
 }
 

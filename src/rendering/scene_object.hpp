@@ -30,15 +30,22 @@ struct Transform {
 
 class SceneObject {
   public:
-    void move(float x, float y) {
+    void move(float x, float y, float z) {
         m_transform.position.x += x;
         m_transform.position.y += y;
+        m_transform.position.z += z;
     }
 
     void rotate(float x, float y, float z) {
         m_transform.rotation.x = std::fmod(m_transform.rotation.x + x, 2.0F * std::numbers::pi_v<float>);
         m_transform.rotation.y = std::fmod(m_transform.rotation.y + y, 2.0F * std::numbers::pi_v<float>);
         m_transform.rotation.z = std::fmod(m_transform.rotation.z + z, 2.0F * std::numbers::pi_v<float>);
+    }
+
+    void scale(float s) {
+        m_transform.scale.x += s;
+        m_transform.scale.y += s;
+        m_transform.scale.z += s;
     }
 
     void scale(float x, float y, float z) {
