@@ -39,8 +39,8 @@ void Application::run() {
     init();
     register_callbacks();
 
-    m_mesh.init();
-    m_mesh.add_vertices({
+    m_scene_object.mesh().init();
+    m_scene_object.mesh().add_vertices({
         {
             .position = {.x = -0.5F, .y = -0.5F},
             .color = {.r = 1.0F, .g = 1.0F, .b = 1.0F, .a = 1.0F},
@@ -178,62 +178,58 @@ auto Application::update() -> void {
     double current_time = glfwGetTime();
     double delta_time = current_time - m_last_time;
     m_last_time = current_time;
-    const float speed{0.1F};
+    const float speed{2.5F};
 
     if (!m_program) {
         throw std::logic_error("Cannot update before the shader program is initialized.");
     }
     m_program->set_float(static_cast<float>(current_time), "t");
 
-    // TODO: Keep a position for the mesh and use glm::translate to build a model matrix.
-    // Pass that matrix to the vertex shader instead of moving every vertex on the CPU.
     if (m_input_state.is_key_down(GLFW_KEY_LEFT)) {
-        m_mesh.update_vertices([&](std::vector<rendering::Vertex>& vertices) -> void {
-            for (auto& vertex : vertices) {
-                vertex.position.x -= speed * static_cast<float>(delta_time);
-            }
-        });
+        m_scene_object.move(-speed * static_cast<float>(delta_time), 0.0F);
+    } else if (m_input_state.is_key_down(GLFW_KEY_RIGHT)) {
+        m_scene_object.move(speed * static_cast<float>(delta_time), 0.0F);
     }
-    if (m_input_state.is_key_down(GLFW_KEY_RIGHT)) {
-        m_mesh.update_vertices([&](std::vector<rendering::Vertex>& vertices) -> void {
-            for (auto& vertex : vertices) {
-                vertex.position.x += speed * static_cast<float>(delta_time);
-            }
-        });
-    }
+
     if (m_input_state.is_key_down(GLFW_KEY_UP)) {
-        m_mesh.update_vertices([&](std::vector<rendering::Vertex>& vertices) -> void {
-            for (auto& vertex : vertices) {
-                vertex.position.y += speed * static_cast<float>(delta_time);
-            }
-        });
+        m_scene_object.move(0.0F, speed * static_cast<float>(delta_time));
+    } else if (m_input_state.is_key_down(GLFW_KEY_DOWN)) {
+        m_scene_object.move(0.0F, -speed * static_cast<float>(delta_time));
     }
-    if (m_input_state.is_key_down(GLFW_KEY_DOWN)) {
-        m_mesh.update_vertices([&](std::vector<rendering::Vertex>& vertices) -> void {
-            for (auto& vertex : vertices) {
-                vertex.position.y -= speed * static_cast<float>(delta_time);
-            }
-        });
+
+    if (m_input_state.is_key_down(GLFW_KEY_Q)) {
+        m_scene_object.rotate(0.0F, 0.0F, speed * static_cast<float>(delta_time));
+    } else if (m_input_state.is_key_down(GLFW_KEY_E)) {
+        m_scene_object.rotate(0.0F, 0.0F, -speed * static_cast<float>(delta_time));
+    }
+
+    if (m_input_state.is_key_down(GLFW_KEY_W)) {
+        m_scene_object.scale(
+            speed * static_cast<float>(delta_time), speed * static_cast<float>(delta_time), 0.0F);
+    } else if (m_input_state.is_key_down(GLFW_KEY_S)) {
+        m_scene_object.scale(
+            -speed * static_cast<float>(delta_time), -speed * static_cast<float>(delta_time), 0.0F);
     }
 
     if (m_input_state.is_mouse_button_pressed(GLFW_MOUSE_BUTTON_1)) {
-        m_mesh.update_vertices([&](std::vector<rendering::Vertex>& vertices) -> void {
-            auto mouse_pos = m_input_state.mouse_pos();
-            int w, h;
-            glfwGetWindowSize(m_window.get(), &w, &h);
-            auto x = static_cast<float>((2 * mouse_pos.x / w) - 1.0);
-            auto y = static_cast<float>(1.0 - (2 * mouse_pos.y / h));
-            vertices.push_back({
-                .position = {.x = x, .y = y},
-                .color =
-                    {
-                        .r = get_random_float(),
-                        .g = get_random_float(),
-                        .b = get_random_float(),
-                        .a = get_random_float(),
-                    },
+        m_scene_object.mesh().update_vertices(
+            [&](std::vector<rendering::Vertex>& vertices) -> void {
+                auto mouse_pos = m_input_state.mouse_pos();
+                int w, h;
+                glfwGetWindowSize(m_window.get(), &w, &h);
+                auto x = static_cast<float>((2 * mouse_pos.x / w) - 1.0);
+                auto y = static_cast<float>(1.0 - (2 * mouse_pos.y / h));
+                vertices.push_back({
+                    .position = {.x = x, .y = y},
+                    .color =
+                        {
+                            .r = get_random_float(),
+                            .g = get_random_float(),
+                            .b = get_random_float(),
+                            .a = get_random_float(),
+                        },
+                });
             });
-        });
     }
 }
 
@@ -249,7 +245,9 @@ auto Application::render() -> void {
             texture->bind(static_cast<uint8_t>(i));
         }
     }
-    m_mesh.render();
+    auto model = m_scene_object.transform().to_model();
+    m_program->set_mat4(model, "Model");
+    m_scene_object.mesh().render();
     m_window.swap_buffers();
 }
 

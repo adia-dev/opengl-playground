@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <expected>
 #include <glad/gl.h>
+#include <glm/ext/matrix_float4x4.hpp>
 #include <print>
 #include <string>
 #include <unordered_map>
@@ -29,6 +30,7 @@ class ShaderProgram {
 
     auto set_int(int value, const std::string& name) const -> void;
     auto set_float(float value, const std::string& name) const -> void;
+    auto set_mat4(const glm::mat4& mat, const std::string& name) const -> void;
     template <typename... Args> auto set_vec(const std::string& name, Args... args) const -> void {
         constexpr auto size = sizeof...(args);
         static_assert(size >= 2 && size <= 4, "A vector must have 2, 3, or 4 components.");

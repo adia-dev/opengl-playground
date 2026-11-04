@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace rendering {
 
@@ -45,6 +46,11 @@ auto ShaderProgram::set_int(int value, const std::string& name) const -> void {
 
 auto ShaderProgram::set_float(float value, const std::string& name) const -> void {
     set_value(glUniform1f, name, value);
+}
+
+auto ShaderProgram::set_mat4(const glm::mat4& mat, const std::string& name) const -> void {
+    set_value(glUniformMatrix4fv, name, 1, GL_FALSE, glm::value_ptr(mat));
+
 }
 
 auto ShaderProgram::link(const Shader& vertex_shader, const Shader& fragment_shader)

@@ -46,11 +46,7 @@ void Mesh::init() {
     glGenBuffers(1, &m_vbo);
 
     glBindVertexArray(m_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    glBufferData(GL_ARRAY_BUFFER,
-                 static_cast<GLsizeiptr>(m_vertices.size() * sizeof(Vertex)),
-                 m_vertices.data(),
-                 GL_DYNAMIC_DRAW);
+    upload_data();
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
     // OpenGL interprets the pointer argument as an offset into the bound VBO.
