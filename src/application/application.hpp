@@ -47,7 +47,7 @@ class Application final {
 
     glm::mat4 m_projection{1.0F};
     bool m_has_drawable_framebuffer{false};
-    bool m_use_perspective_projection{false};
+    bool m_use_perspective_projection{true};
 
     double m_last_time{};
 };

@@ -33,11 +33,10 @@ Application::Application(const char* title, int window_width, int window_height)
 void Application::create_scene_object() {
     rendering::SceneObject object;
     object.mesh.init();
-    object.mesh.update_vertices(
-        [](std::vector<rendering::Vertex>& vertices) mutable -> void {
-            const auto box = rendering::box_vertices();
-            vertices.insert(vertices.end(), box.begin(), box.end());
-        });
+    object.mesh.update_vertices([](std::vector<rendering::Vertex>& vertices) mutable -> void {
+        const auto box = rendering::box_vertices();
+        vertices.insert(vertices.end(), box.begin(), box.end());
+    });
     m_scene_objects.push_back(std::move(object));
 }
 
@@ -46,6 +45,8 @@ void Application::run() {
     register_callbacks();
 
     create_scene_object();
+    // NOTE: Unsafe but cool for testing
+    m_current_scene_object_idx = 0;
 
     m_last_time = glfwGetTime();
     while (glfwWindowShouldClose(m_window.get()) == 0) {
@@ -235,7 +236,7 @@ auto Application::update() -> void {
 
     // Rotate the camera in place, at one radian per second.
     // TODO: Replace the automatic rotation with camera controls of your choice.
-    m_application_state.camera_transform.rotate(0.0F, delta_time, 0.0F);
+    // m_application_state.camera_transform.rotate(0.0F, delta_time, 0.0F);
 }
 
 auto Application::render() -> void {
@@ -260,10 +261,25 @@ auto Application::render() -> void {
         m_textures[i].bind(static_cast<uint8_t>(i));
     }
 
-    for (auto& scene_object : m_scene_objects) {
-        auto model = scene_object.transform.to_model();
-        m_program->set_mat4(model, "Model");
-        scene_object.mesh.render();
+    constexpr std::array cube_positions = {
+        glm::vec3(0.0F, 0.0F, 0.0F),
+        glm::vec3(2.0F, 5.0F, -15.0F),
+        glm::vec3(-1.5F, -2.2F, -2.5F),
+        glm::vec3(-3.8F, -2.0F, -12.3F),
+        glm::vec3(2.4F, -0.4F, -3.5F),
+        glm::vec3(-1.7F, 3.0F, -7.5F),
+        glm::vec3(1.3F, -2.0F, -2.5F),
+        glm::vec3(1.5F, 2.0F, -2.5F),
+        glm::vec3(1.5F, 0.2F, -1.5F),
+        glm::vec3(-1.3F, 1.0F, -1.5F),
+    };
+    for (const auto& pos : cube_positions) {
+        for (auto& scene_object : m_scene_objects) {
+            auto model = scene_object.transform.to_model();
+            model = glm::translate(model, pos);
+            m_program->set_mat4(model, "Model");
+            scene_object.mesh.render();
+        }
     }
 
     m_window.swap_buffers();
