@@ -11,7 +11,9 @@
 #include <filesystem>
 #include <format>
 #include <glad/gl.h>
-#include <print>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/matrix.hpp>
+#include <glm/trigonometric.hpp>
 #include <stb_image.h>
 #include <stdexcept>
 #include <string>
@@ -31,8 +33,8 @@ void Application::run() {
     init();
     register_callbacks();
 
-    m_scene_object.mesh().init();
-    m_scene_object.mesh().update_vertices([](std::vector<rendering::Vertex>& vertices) -> void {
+    m_scene_object.mesh.init();
+    m_scene_object.mesh.update_vertices([](std::vector<rendering::Vertex>& vertices) -> void {
         const auto box = rendering::box_vertices();
         vertices.insert(vertices.end(), box.begin(), box.end());
     });
@@ -71,7 +73,7 @@ auto Application::init() -> void {
 
     int w, h;
     glfwGetFramebufferSize(m_window.get(), &w, &h);
-    glViewport(0, 0, w, h);
+    update_framebuffer_size(w, h);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -99,20 +101,20 @@ auto Application::init() -> void {
     m_program->use();
 
     load_texture(resource_dir / "textures" / "choso.png");
-    // load_texture(resource_dir / "textures" / "bartz.png");
 
     if (std::cmp_greater(m_textures.size(), rendering::Texture2D::max_fragment_texture_units())) {
         throw std::runtime_error("Too many textures for the fragment shader.");
     }
 
     program.set_int(0, "Texture1");
-    // program.set_int(1, "Texture2");
 }
 
 auto Application::register_callbacks() -> void {
     glfwSetFramebufferSizeCallback(
-        m_window.get(),
-        [](GLFWwindow* window, int w, int h) static -> void { glViewport(0, 0, w, h); });
+        m_window.get(), [](GLFWwindow* window, int w, int h) static -> void {
+            auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+            app->update_framebuffer_size(w, h);
+        });
 
     glfwSetKeyCallback(
         m_window.get(),
@@ -134,14 +136,33 @@ auto Application::register_callbacks() -> void {
         m_window.get(), [](GLFWwindow* window, double xpos, double ypos) -> void {
             auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
             app->m_input_state.update_mouse_pos({.x = xpos, .y = ypos});
-
-            int w, h;
-            glfwGetWindowSize(app->m_window.get(), &w, &h);
-            auto x = static_cast<float>((2 * xpos / w) - 1.0);
-            auto y = static_cast<float>(1.0 - (2 * ypos / h));
-            app->m_program->set_vec("MousePos", x, y);
-            std::println("x: {}, y: {}", x, y);
         });
+}
+
+auto Application::update_framebuffer_size(int width, int height) -> void {
+    glViewport(0, 0, width, height);
+    m_has_drawable_framebuffer = width > 0 && height > 0;
+    if (!m_has_drawable_framebuffer) {
+        return;
+    }
+
+    constexpr float near_distance = 0.1F;
+    constexpr float far_distance = 100.0F;
+    const auto aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
+    if (m_use_perspective_projection) {
+        constexpr float fov_in_degrees = 45.0F;
+        m_projection = glm::perspective(
+            glm::radians(fov_in_degrees), aspect_ratio, near_distance, far_distance);
+    } else {
+        constexpr float half_view_height = 2.0F;
+        const auto half_view_width = half_view_height * aspect_ratio;
+        m_projection = glm::ortho(-half_view_width,
+                                  half_view_width,
+                                  -half_view_height,
+                                  half_view_height,
+                                  near_distance,
+                                  far_distance);
+    }
 }
 
 auto Application::handle_events() noexcept -> void {
@@ -151,25 +172,21 @@ auto Application::handle_events() noexcept -> void {
 
 auto Application::update() -> void {
     double current_time = glfwGetTime();
-    double delta_time = current_time - m_last_time;
+    auto delta_time = static_cast<float>(current_time - m_last_time);
     m_last_time = current_time;
+
     const float speed{2.5F};
 
-    if (!m_program) {
-        throw std::logic_error("Cannot update before the shader program is initialized.");
-    }
-    m_program->set_float(static_cast<float>(current_time), "t");
-
     if (m_input_state.is_key_down(GLFW_KEY_A)) {
-        m_scene_object.move(-speed * static_cast<float>(delta_time), 0.0F, 0.0F);
+        m_scene_object.transform.translate(-speed * delta_time, 0.0F, 0.0F);
     } else if (m_input_state.is_key_down(GLFW_KEY_D)) {
-        m_scene_object.move(speed * static_cast<float>(delta_time), 0.0F, 0.0F);
+        m_scene_object.transform.translate(speed * delta_time, 0.0F, 0.0F);
     }
 
     if (m_input_state.is_key_down(GLFW_KEY_W)) {
-        m_scene_object.move(0.0F, 0.0F, speed * static_cast<float>(delta_time));
+        m_scene_object.transform.translate(0.0F, 0.0F, speed * delta_time);
     } else if (m_input_state.is_key_down(GLFW_KEY_S)) {
-        m_scene_object.move(0.0F, 0.0F, -speed * static_cast<float>(delta_time));
+        m_scene_object.transform.translate(0.0F, 0.0F, -speed * delta_time);
     }
 
     static int axis{0};
@@ -178,13 +195,13 @@ auto Application::update() -> void {
         float direction = m_input_state.is_key_down(GLFW_KEY_LEFT) ? -1.F : 1.F;
         switch (axis) {
         case 0:
-            m_scene_object.rotate(direction * speed * static_cast<float>(delta_time), 0.0F, 0.0F);
+            m_scene_object.transform.rotate(direction * speed * delta_time, 0.0F, 0.0F);
             break;
         case 1:
-            m_scene_object.rotate(0.0F, direction * speed * static_cast<float>(delta_time), 0.0F);
+            m_scene_object.transform.rotate(0.0F, direction * speed * delta_time, 0.0F);
             break;
         case 2:
-            m_scene_object.rotate(0.0F, 0.0F, direction * speed * static_cast<float>(delta_time));
+            m_scene_object.transform.rotate(0.0F, 0.0F, direction * speed * delta_time);
             break;
         default:
             break;
@@ -192,41 +209,47 @@ auto Application::update() -> void {
     }
 
     if (m_input_state.is_key_down(GLFW_KEY_UP)) {
-        m_scene_object.scale(speed * static_cast<float>(delta_time));
+        m_scene_object.transform.adjust_scale(speed * delta_time);
     } else if (m_input_state.is_key_down(GLFW_KEY_DOWN)) {
-        m_scene_object.scale(-speed * static_cast<float>(delta_time));
+        m_scene_object.transform.adjust_scale(-speed * delta_time);
     }
 
-    if (m_input_state.is_mouse_button_pressed(GLFW_MOUSE_BUTTON_1)) {
-        m_scene_object.mesh().update_vertices(
-            [&](std::vector<rendering::Vertex>& vertices) -> void {
-                auto mouse_pos = m_input_state.mouse_pos();
-                int w, h;
-                glfwGetWindowSize(m_window.get(), &w, &h);
-                auto x = static_cast<float>((2 * mouse_pos.x / w) - 1.0);
-                auto y = static_cast<float>(1.0 - (2 * mouse_pos.y / h));
-                vertices.push_back({
-                    .position = {.x = x, .y = y},
-                });
-            });
+    if (m_input_state.is_key_pressed(GLFW_KEY_TAB)) {
+        m_use_perspective_projection = !m_use_perspective_projection;
+        int w, h;
+        glfwGetFramebufferSize(m_window.get(), &w, &h);
+        update_framebuffer_size(w, h);
     }
+
+    // Rotate the camera in place, at one radian per second.
+    // TODO: Replace the automatic rotation with camera controls of your choice.
+    m_application_state.camera_transform.rotate(0.0F, delta_time, 0.0F);
 }
 
 auto Application::render() -> void {
+    if (!m_has_drawable_framebuffer) {
+        return;
+    }
     if (m_program) {
         (*m_program).use();
     }
     glClearColor(m_application_state.red_intensity, 0.1F, 0.2F, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    for (std::size_t i = 0; i < m_textures.size(); ++i) {
-        const auto& texture = m_textures[i];
-        if (texture) {
-            texture->bind(static_cast<uint8_t>(i));
-        }
+    m_program->set_mat4(m_projection, "Projection");
+
+    const auto& camera = m_application_state.camera_transform;
+    if (camera.scale.x == 0.0F || camera.scale.y == 0.0F || camera.scale.z == 0.0F) {
+        throw std::logic_error("The camera transform cannot have a zero scale.");
     }
-    auto model = m_scene_object.transform().to_model();
+    auto view = glm::inverse(camera.to_model());
+    m_program->set_mat4(view, "View");
+
+    for (std::size_t i = 0; i < m_textures.size(); ++i) {
+        m_textures[i].bind(static_cast<uint8_t>(i));
+    }
+    auto model = m_scene_object.transform.to_model();
     m_program->set_mat4(model, "Model");
-    m_scene_object.mesh().render();
+    m_scene_object.mesh.render();
     m_window.swap_buffers();
 }
 

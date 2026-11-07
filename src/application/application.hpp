@@ -8,6 +8,7 @@
 #include "states/input_state.hpp"
 #include "window/window.hpp"
 #include <filesystem>
+#include <glm/ext/matrix_float4x4.hpp>
 #include <optional>
 #include <vector>
 
@@ -27,6 +28,7 @@ class Application final {
     void load_texture(const std::filesystem::path& texture_path);
     auto init() -> void;
     auto register_callbacks() -> void;
+    auto update_framebuffer_size(int width, int height) -> void;
     auto handle_events() noexcept -> void;
     auto update() -> void;
     auto render() -> void;
@@ -38,7 +40,11 @@ class Application final {
     states::ApplicationState m_application_state;
     rendering::SceneObject m_scene_object;
     std::optional<rendering::ShaderProgram> m_program;
-    std::vector<std::optional<rendering::Texture2D>> m_textures;
+    std::vector<rendering::Texture2D> m_textures;
+
+    glm::mat4 m_projection{1.0F};
+    bool m_has_drawable_framebuffer{false};
+    bool m_use_perspective_projection{false};
 
     double m_last_time{};
 };
