@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math/vector2.hpp"
 #include "rendering/vertex.hpp"
 #include <array>
 #include <cstddef>
@@ -7,7 +8,7 @@
 namespace rendering {
 
 // Six faces, each made of two triangles with independent texture coordinates.
-inline auto box_vertices() -> std::array<Vertex, 36> {
+inline auto box_vertices(math::Vector3f offset = math::Vector3f::zero()) -> std::array<Vertex, 36> {
     constexpr float half = 0.5F;
     constexpr std::array<math::Vector3f, 8> corners{
         {
@@ -45,7 +46,7 @@ inline auto box_vertices() -> std::array<Vertex, 36> {
     std::size_t output = 0;
     for (const auto& face : faces) {
         for (const auto corner : triangles) {
-            vertices[output++] = {.position = corners[face[corner]], .uv = uvs[corner]};
+            vertices[output++] = {.position = corners[face[corner]] + offset, .uv = uvs[corner]};
         }
     }
     return vertices;

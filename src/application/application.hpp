@@ -33,12 +33,15 @@ class Application final {
     auto update() -> void;
     auto render() -> void;
 
+    void create_scene_object();
+
   private:
     runtimes::GlfwRuntime m_glfw_runtime;
     window::Window m_window;
     states::InputState m_input_state;
     states::ApplicationState m_application_state;
-    rendering::SceneObject m_scene_object;
+    std::vector<rendering::SceneObject> m_scene_objects;
+    std::optional<std::size_t> m_current_scene_object_idx;
     std::optional<rendering::ShaderProgram> m_program;
     std::vector<rendering::Texture2D> m_textures;
 

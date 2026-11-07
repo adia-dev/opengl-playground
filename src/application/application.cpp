@@ -3,6 +3,7 @@
 #include "rendering/box.hpp"
 #include "rendering/image.hpp"
 #include "rendering/mesh.hpp"
+#include "rendering/scene_object.hpp"
 #include "rendering/shader.hpp"
 #include "rendering/shader_program.hpp"
 #include "rendering/texture.hpp"
@@ -29,15 +30,22 @@ Application::Application(const char* title, int window_width, int window_height)
     }
 }
 
+void Application::create_scene_object() {
+    rendering::SceneObject object;
+    object.mesh.init();
+    object.mesh.update_vertices(
+        [](std::vector<rendering::Vertex>& vertices) mutable -> void {
+            const auto box = rendering::box_vertices();
+            vertices.insert(vertices.end(), box.begin(), box.end());
+        });
+    m_scene_objects.push_back(std::move(object));
+}
+
 void Application::run() {
     init();
     register_callbacks();
 
-    m_scene_object.mesh.init();
-    m_scene_object.mesh.update_vertices([](std::vector<rendering::Vertex>& vertices) -> void {
-        const auto box = rendering::box_vertices();
-        vertices.insert(vertices.end(), box.begin(), box.end());
-    });
+    create_scene_object();
 
     m_last_time = glfwGetTime();
     while (glfwWindowShouldClose(m_window.get()) == 0) {
@@ -177,48 +185,52 @@ auto Application::update() -> void {
 
     const float speed{2.5F};
 
-    if (m_input_state.is_key_down(GLFW_KEY_A)) {
-        m_scene_object.transform.translate(-speed * delta_time, 0.0F, 0.0F);
-    } else if (m_input_state.is_key_down(GLFW_KEY_D)) {
-        m_scene_object.transform.translate(speed * delta_time, 0.0F, 0.0F);
-    }
+    if (auto idx = m_current_scene_object_idx; idx) {
+        auto& scene_object = m_scene_objects[*idx];
 
-    if (m_input_state.is_key_down(GLFW_KEY_W)) {
-        m_scene_object.transform.translate(0.0F, 0.0F, speed * delta_time);
-    } else if (m_input_state.is_key_down(GLFW_KEY_S)) {
-        m_scene_object.transform.translate(0.0F, 0.0F, -speed * delta_time);
-    }
-
-    static int axis{0};
-    axis = (axis + static_cast<int>(m_input_state.is_key_pressed(GLFW_KEY_SPACE))) % 3;
-    if (m_input_state.is_key_down(GLFW_KEY_LEFT) || m_input_state.is_key_down(GLFW_KEY_RIGHT)) {
-        float direction = m_input_state.is_key_down(GLFW_KEY_LEFT) ? -1.F : 1.F;
-        switch (axis) {
-        case 0:
-            m_scene_object.transform.rotate(direction * speed * delta_time, 0.0F, 0.0F);
-            break;
-        case 1:
-            m_scene_object.transform.rotate(0.0F, direction * speed * delta_time, 0.0F);
-            break;
-        case 2:
-            m_scene_object.transform.rotate(0.0F, 0.0F, direction * speed * delta_time);
-            break;
-        default:
-            break;
+        if (m_input_state.is_key_down(GLFW_KEY_A)) {
+            scene_object.transform.translate(-speed * delta_time, 0.0F, 0.0F);
+        } else if (m_input_state.is_key_down(GLFW_KEY_D)) {
+            scene_object.transform.translate(speed * delta_time, 0.0F, 0.0F);
         }
-    }
 
-    if (m_input_state.is_key_down(GLFW_KEY_UP)) {
-        m_scene_object.transform.adjust_scale(speed * delta_time);
-    } else if (m_input_state.is_key_down(GLFW_KEY_DOWN)) {
-        m_scene_object.transform.adjust_scale(-speed * delta_time);
-    }
+        if (m_input_state.is_key_down(GLFW_KEY_W)) {
+            scene_object.transform.translate(0.0F, 0.0F, speed * delta_time);
+        } else if (m_input_state.is_key_down(GLFW_KEY_S)) {
+            scene_object.transform.translate(0.0F, 0.0F, -speed * delta_time);
+        }
 
-    if (m_input_state.is_key_pressed(GLFW_KEY_TAB)) {
-        m_use_perspective_projection = !m_use_perspective_projection;
-        int w, h;
-        glfwGetFramebufferSize(m_window.get(), &w, &h);
-        update_framebuffer_size(w, h);
+        static int axis{0};
+        axis = (axis + static_cast<int>(m_input_state.is_key_pressed(GLFW_KEY_SPACE))) % 3;
+        if (m_input_state.is_key_down(GLFW_KEY_LEFT) || m_input_state.is_key_down(GLFW_KEY_RIGHT)) {
+            float direction = m_input_state.is_key_down(GLFW_KEY_LEFT) ? -1.F : 1.F;
+            switch (axis) {
+            case 0:
+                scene_object.transform.rotate(direction * speed * delta_time, 0.0F, 0.0F);
+                break;
+            case 1:
+                scene_object.transform.rotate(0.0F, direction * speed * delta_time, 0.0F);
+                break;
+            case 2:
+                scene_object.transform.rotate(0.0F, 0.0F, direction * speed * delta_time);
+                break;
+            default:
+                break;
+            }
+        }
+
+        if (m_input_state.is_key_down(GLFW_KEY_UP)) {
+            scene_object.transform.adjust_scale(speed * delta_time);
+        } else if (m_input_state.is_key_down(GLFW_KEY_DOWN)) {
+            scene_object.transform.adjust_scale(-speed * delta_time);
+        }
+
+        if (m_input_state.is_key_pressed(GLFW_KEY_TAB)) {
+            m_use_perspective_projection = !m_use_perspective_projection;
+            int w, h;
+            glfwGetFramebufferSize(m_window.get(), &w, &h);
+            update_framebuffer_size(w, h);
+        }
     }
 
     // Rotate the camera in place, at one radian per second.
@@ -247,9 +259,13 @@ auto Application::render() -> void {
     for (std::size_t i = 0; i < m_textures.size(); ++i) {
         m_textures[i].bind(static_cast<uint8_t>(i));
     }
-    auto model = m_scene_object.transform.to_model();
-    m_program->set_mat4(model, "Model");
-    m_scene_object.mesh.render();
+
+    for (auto& scene_object : m_scene_objects) {
+        auto model = scene_object.transform.to_model();
+        m_program->set_mat4(model, "Model");
+        scene_object.mesh.render();
+    }
+
     m_window.swap_buffers();
 }
 

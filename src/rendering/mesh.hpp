@@ -14,7 +14,7 @@ class Mesh final {
     ~Mesh();
 
     Mesh(const Mesh&) = delete;
-    Mesh(Mesh&&) = delete;
+    Mesh(Mesh&&) noexcept;
     auto operator=(const Mesh&) -> Mesh& = delete;
     auto operator=(Mesh&&) -> Mesh& = delete;
 

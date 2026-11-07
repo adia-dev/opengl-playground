@@ -3,6 +3,7 @@
 #include <functional>
 #include <glad/gl.h>
 #include <initializer_list>
+#include <utility>
 #include <vector>
 
 namespace rendering {
@@ -15,6 +16,10 @@ Mesh::~Mesh() {
         glDeleteVertexArrays(1, &m_vao);
     }
 }
+
+Mesh::Mesh(Mesh&& other) noexcept
+    : m_vertices(std::move(other.m_vertices)), m_vao(std::exchange(other.m_vao, 0)),
+      m_vbo(std::exchange(other.m_vbo, 0)), m_dirty(std::exchange(other.m_dirty, false)) {}
 
 auto Mesh::add_vertex(const Vertex& vertex) -> void {
     m_vertices.push_back(vertex);
